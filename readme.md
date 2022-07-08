@@ -105,5 +105,7 @@ The contents of `hosts.yml` file can be seen [here](ansible-host.yml).
 [https://172.18.46.11:9021](https://172.18.46.11:9021)
 
 Control center user:
-: username : control_center
-: password : password
+```
+username : control_center
+password : password
+```
