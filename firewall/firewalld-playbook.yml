@@ -1,0 +1,64 @@
+---
+  - name: Create Zone
+    hosts: all
+    tasks:
+      - name: Create Zookeeper Zone
+        firewalld:
+          zone: zookeeper
+          state: present
+          permanent: true
+
+      - name: Reload firewalld
+        systemd:
+          name: firewalld
+          state: reloaded
+
+  - name: Firewall Rules
+    hosts: all
+    tasks:
+      - name: Zookeeper Rules Source
+        firewalld:
+          permanent: yes
+          immediate: yes
+          state: "{{item.state}}"
+          zone: "{{item.zone}}"
+          source: "{{item.source}}"
+        with_items:
+        - {state: "enabled", zone: "zookeeper", source: "172.18.46.11/24" }
+        - {state: "enabled", zone: "zookeeper", source: "172.18.46.12/24" }
+        - {state: "enabled", zone: "zookeeper", source: "172.18.46.13/24" }
+
+      - name: Zookeeper Rules Port
+        firewalld:
+          permanent: yes
+          immediate: yes
+          state: "{{item.state}}"
+          zone: "{{item.zone}}"
+          port: "{{item.port}}/{{item.proto}}"
+        with_items:
+        - {port: "2181-2182", proto: "tcp", state: "enabled", zone: "zookeeper"}
+        - {port: "2888-3888", proto: "tcp", state: "enabled", zone: "zookeeper"}
+
+      - name: Public Rules
+        firewalld:
+          permanent: yes
+          immediate: yes
+          state: "{{item.state}}"
+          zone: "{{item.zone}}"
+          port: "{{item.port}}/{{item.proto}}"
+        with_items:
+        - {port: "9091", proto: "tcp", state: "enabled", zone: "public"}
+        - {port: "9092", proto: "tcp", state: "enabled", zone: "public"}
+        - {port: "9093", proto: "tcp", state: "enabled", zone: "public"}
+        - {port: "9094", proto: "tcp", state: "enabled", zone: "public"}
+        - {port: "8090", proto: "tcp", state: "enabled", zone: "public"}
+        - {port: "9021", proto: "tcp", state: "enabled", zone: "public"}
+        - {port: "8081", proto: "tcp", state: "enabled", zone: "public"}
+        - {port: "8082", proto: "tcp", state: "enabled", zone: "public"}
+        - {port: "8083", proto: "tcp", state: "enabled", zone: "public"}
+        - {port: "8088", proto: "tcp", state: "enabled", zone: "public"}
+
+      - name: Reload firewalld
+        systemd:
+          name: firewalld
+          state: reloaded

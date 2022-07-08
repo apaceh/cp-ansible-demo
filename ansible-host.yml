@@ -1,0 +1,236 @@
+---
+all:
+  vars:
+    #### Setting for connection to remote hosts ####
+    ansible_connection: ssh
+    ansible_user: root
+    ansible_become: true
+    ansible_ssh_private_key_file: /tmp/certs/ssh_priv.pem
+    
+    # deployment_strategy: rolling
+    
+    #### Install java ####
+    install_java: true #
+    redhat_java_package_name: java-1.8.0-openjdk #
+
+    #### TLS Configuration ####
+    ssl_enabled: true
+
+    ssl_custom_certs: true
+    ssl_ca_cert_filepath: "/tmp/certs/ssl/snakeoil-ca-1.crt"
+    ssl_signed_cert_filepath: "/tmp/certs/ssl/{{inventory_hostname}}-ca1-signed.crt"
+    ssl_key_filepath: "/tmp/certs/ssl/{{inventory_hostname}}.key"
+    # ssl_key_password: password
+    regenerate_keystore_and_truststore: true
+
+    # ssl_provided_keystore_and_truststore: true
+    # ssl_keystore_filepath: "/tmp/certs/server.keystore.p12"
+    # ssl_keystore_key_password: password
+    # ssl_keystore_store_password: password
+    # ssl_truststore_filepath: "/tmp/certs/server.truststore.p12"
+    # ssl_truststore_password: password
+    # regenerate_keystore_and_truststore: false
+    # regenerate_ca: true
+
+    secrets_protection_enabled: true
+
+    #### SASL Authentication Configuration ####
+    sasl_protocol: kerberos
+    #### Kerberos Configuration ####
+    ## Applicable when sasl_protocol is kerberos
+    ## REQUIRED: Under each host set keytab file path and principal name, see below
+    kerberos_configure: true
+    kerberos:
+     realm: alfi.com
+     kdc_hostname: kerberos.alfi.com
+     admin_hostname: kerberos.alfi.com
+
+    zookeeper_client_authentication_type: kerberos
+    zookeeper_quorum_authentication_type: mtls
+
+    #### Authorization Configuration ####
+    rbac_enabled: true
+    create_mds_certs: false
+
+    token_services_public_pem_file: /tmp/certs/tokenPublicKey.pem
+    token_services_private_pem_file: /tmp/certs/tokenKeypair.pem
+
+    mds_super_user: mds
+    mds_super_user_password: password
+    kafka_broker_ldap_user: kafka_broker
+    kafka_broker_ldap_password: password
+    schema_registry_ldap_user: schema_registry
+    schema_registry_ldap_password: password
+    kafka_connect_ldap_user: connect_worker
+    kafka_connect_ldap_password: password
+    ksql_ldap_user: ksql
+    ksql_ldap_password: password
+    kafka_rest_ldap_user: rest_proxy
+    kafka_rest_ldap_password: password
+    control_center_ldap_user: control_center
+    control_center_ldap_password: password
+
+    # Cluster names
+    kafka_broker_cluster_name: confluent_broker
+    schema_registry_cluster_name: confluent_schema_registry
+    kafka_connect_cluster_name: confluent_kafka_connect
+    ksql_cluster_name: confluent_ksql
+
+zookeeper:
+  vars:
+    zookeeper_log_dir: /data/log/zookeeper
+    zookeeper_custom_properties:
+      dataDir: /data/zookeeper/data
+      dataLogDir: /data/zookeeper/data-log
+      clientPort: 2181
+
+      # sslQuorum: true
+      # serverCnxnFactory: org.apache.zookeeper.server.NettyServerCnxnFactory
+      # ssl.quorum.keyStore.location: /var/ssl/private/zookeeper.keystore.jks
+      # ssl.quorum.keyStore.password: password
+      # ssl.quorum.trustStore.location: /var/ssl/private/zookeeper.truststore.jks
+      # ssl.quorum.trustStore.password: password
+
+      4lw.commands.whitelist: "*"
+      tickTime: 2000
+      requireClientAuthScheme: sasl
+
+  hosts:
+    broker1.alfi.com:
+      zookeeper_id: 1
+      zookeeper_kerberos_keytab_path: /tmp/keytabs/allprinc.keytab
+      zookeeper_kerberos_principal: zookeeper/broker1.alfi.com@ALFI.COM
+    broker2.alfi.com:
+      zookeeper_id: 2
+      zookeeper_kerberos_keytab_path: /tmp/keytabs/allprinc.keytab
+      zookeeper_kerberos_principal: zookeeper/broker2.alfi.com@ALFI.COM
+    broker3.alfi.com:
+      zookeeper_id: 3
+      zookeeper_kerberos_keytab_path: /tmp/keytabs/allprinc.keytab
+      zookeeper_kerberos_principal: zookeeper/broker3.alfi.com@ALFI.COM
+
+kafka_broker:
+  vars:
+    kafka_broker_log_dir: /data/log/kafka
+    kafka_broker_custom_listeners:
+      broker:
+        name: BROKER
+        port: 9091
+      internal:
+        name: INTERNAL
+        port: 9092
+      client_listener:
+        name: CLIENT
+        port: 9093
+      ldap_listener:
+        name: LDAP
+        port: 9094
+        sasl_protocol: plain
+
+    kafka_broker_custom_properties:
+      log.dirs: /data/kafka
+
+      # Topic
+      auto.create.topic.enable: false
+      num.partitions: 3
+      default.replication.factor: 3
+      min.insync.replicas: 2
+
+      ## To enabled Self Balancing Kafka Brokers, uncomment the below lines
+      confluent.balancer.enable: "true"
+      confluent.balancer.heal.uneven.load.trigger: ANY_UNEVEN_LOAD
+
+      ssl.principal.mapping.rules: "RULE:.O=(.?),OU=TEST.$$/$$1/,RULE:^cn=(.?),ou=(.?),dc=(.?),dc=(.*?)"
+
+      # zookeeper.ssl.keystore.location: /var/ssl/private/kafka_broker.keystore.jks
+      # zookeeper.ssl.keystore.password: password
+
+      listener.name.ldap.plain.sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required;
+      listener.name.ldap.plain.sasl.server.callback.handler.class: io.confluent.security.auth.provider.ldap.LdapAuthenticateCallbackHandler
+
+      ## LDAP Configuration
+      ldap.java.naming.factory.initial: com.sun.jndi.ldap.LdapCtxFactory
+      ldap.com.sun.jndi.ldap.read.timeout: 60000
+      ldap.refresh.interval.ms: 1800000
+      ldap.java.naming.provider.url: ldap://kerberos:389
+      ldap.java.naming.referral: follow
+      ldap.java.naming.security.authentication: GSSAPI
+      #ldap.java.naming.security.principal=CN=ctadmin,OU=People,DC=ALFI,DC=COM
+      #ldap.java.naming.security.credentials=password
+      ldap.java.naming.security.principal: kafka/broker1.alfi.com@ALFI.COM
+      ldap.sasl.jaas.config: com.sun.security.auth.module.Krb5LoginModule required keyTab="/etc/security/keytabs/kafka_broker.keytab" principal="kafka/broker1.alfi.com@ALFI.COM" debug="true" storeKey="true" useKeyTab="true";
+
+      ldap.search.mode: USERS
+      ldap.group.search.scope: 2
+      ldap.group.search.base: CN=kafkadev,OU=People,DC=ALFI,DC=COM
+      ldap.group.name.attribute: cn
+      ldap.group.name.attribute.pattern: (kafkadev)
+      ldap.group.object.class: groupOfNames
+      ldap.group.member.attribute: member
+      ldap.group.member.attribute.pattern: CN=(.*),OU=People,DC=ALFI,DC=COM
+      ldap.user.search.scope: 2
+      ldap.user.search.base: OU=People,DC=ALFI,DC=COM
+      ldap.user.object.class: person
+      ldap.user.name.attribute: cn
+      ldap.user.memberof.attribute: memberOf
+      ldap.user.memberof.attribute.pattern: CN=(.*),OU=People,DC=ALFI,DC=COM
+      ldap.user.search.filter: (memberOf=CN=kafkadev,OU=People,DC=ALFI,DC=COM)
+
+  hosts:
+    broker1.alfi.com:
+      broker_id: 0
+      kafka_broker_kerberos_keytab_path: /tmp/keytabs/allprinc.keytab
+      kafka_broker_kerberos_principal: kafka/broker1.alfi.com@ALFI.COM
+
+    broker2.alfi.com:
+      broker_id: 1
+      kafka_broker_kerberos_keytab_path: /tmp/keytabs/allprinc.keytab
+      kafka_broker_kerberos_principal: kafka/broker2.alfi.com@ALFI.COM
+
+    broker3.alfi.com:
+      broker_id: 3
+      kafka_broker_kerberos_keytab_path: /tmp/keytabs/allprinc.keytab
+      kafka_broker_kerberos_principal: kafka/broker3.alfi.com@ALFI.COM
+
+schema_registry:
+  vars:
+    schema_registry_log_dir: /data/log/schema-registry
+  hosts:
+    broker1.alfi.com:
+      schema_registry_kerberos_keytab_path: /tmp/keytabs/schemaregistry_1.keytab
+      schema_registry_kerberos_principal: schemaregistry/broker1.alfi.com
+
+kafka_rest:
+  vars:
+    kafka_rest_log_dir: /data/log/kafka-rest
+  hosts:
+    broker1.alfi.com:
+      kafka_connect_kerberos_keytab_path: /tmp/keytabs/connect_1.keytab
+      kafka_connect_kerberos_principal: connect/broker1.alfi.com
+
+ksql:
+  vars:
+    ksql_log_dir: /data/log/ksql
+  hosts:
+    broker1.alfi.com:
+      kafka_rest_kerberos_keytab_path: /tmp/keytabs/restproxy_1.keytab
+      kafka_rest_kerberos_principal: restproxy/broker1.alfi.com
+
+kafka_connect:
+  vars:
+    kafka_connect_log_dir: /data/log/kafka-connect
+  hosts:
+    broker1.alfi.com:
+      ksql_kerberos_keytab_path: /tmp/keytabs/ksql_1.keytab
+      ksql_kerberos_principal: ksql/broker1.alfi.com
+
+control_center:
+  vars:
+    control_center_log_dir: /data/log/control-center
+    control_center_rocksdb_path: /data/rocksdb
+    control_center_custom_properties:
+      confluent.controlcenter.data.dir: /data/control-center
+  hosts:
+    broker1.alfi.com:
+      control_center_kerberos_keytab_path: /tmp/keytabs/controlcenter_1.keytab
+      control_center_kerberos_principal: controlcenter/broker1.alfi.com
