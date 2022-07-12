@@ -30,6 +30,7 @@ Below is list of kerberos principal we will use:
 | schemaregistry/broker1.alfi.com | schemaregistry.keytab |
 | restproxy/broker1.alfi.com      | restproxy.keytab      |
 | controlcenter/broker1.alfi.com  | controlcenter.keytab  |
+
 Put all keytab file at /tmp/keytabs/.
 
 Below is list of LDAP principal we will use:
