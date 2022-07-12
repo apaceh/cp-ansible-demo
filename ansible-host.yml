@@ -59,15 +59,15 @@ all:
     mds_super_user_password: password
     kafka_broker_ldap_user: kafka_broker
     kafka_broker_ldap_password: password
-    schema_registry_ldap_user: schema_registry
+    schema_registry_ldap_user: schemaregistry
     schema_registry_ldap_password: password
-    kafka_connect_ldap_user: connect_worker
+    kafka_connect_ldap_user: connect
     kafka_connect_ldap_password: password
     ksql_ldap_user: ksql
     ksql_ldap_password: password
-    kafka_rest_ldap_user: rest_proxy
+    kafka_rest_ldap_user: restproxy
     kafka_rest_ldap_password: password
-    control_center_ldap_user: control_center
+    control_center_ldap_user: controlcenter
     control_center_ldap_password: password
 
     # Cluster names
@@ -152,7 +152,7 @@ kafka_broker:
       ldap.java.naming.factory.initial: com.sun.jndi.ldap.LdapCtxFactory
       ldap.com.sun.jndi.ldap.read.timeout: 60000
       ldap.refresh.interval.ms: 1800000
-      ldap.java.naming.provider.url: ldap://kerberos:389
+      ldap.java.naming.provider.url: ldap://kerberos.alfi.com:389
       ldap.java.naming.referral: follow
       ldap.java.naming.security.authentication: GSSAPI
       #ldap.java.naming.security.principal=CN=ctadmin,OU=People,DC=ALFI,DC=COM
@@ -197,7 +197,7 @@ schema_registry:
     schema_registry_log_dir: /data/log/schema-registry
   hosts:
     broker1.alfi.com:
-      schema_registry_kerberos_keytab_path: /tmp/keytabs/schemaregistry_1.keytab
+      schema_registry_kerberos_keytab_path: /tmp/keytabs/schemaregistry.keytab
       schema_registry_kerberos_principal: schemaregistry/broker1.alfi.com
 
 kafka_rest:
@@ -205,7 +205,7 @@ kafka_rest:
     kafka_rest_log_dir: /data/log/kafka-rest
   hosts:
     broker1.alfi.com:
-      kafka_connect_kerberos_keytab_path: /tmp/keytabs/connect_1.keytab
+      kafka_connect_kerberos_keytab_path: /tmp/keytabs/connect.keytab
       kafka_connect_kerberos_principal: connect/broker1.alfi.com
 
 ksql:
@@ -213,7 +213,7 @@ ksql:
     ksql_log_dir: /data/log/ksql
   hosts:
     broker1.alfi.com:
-      kafka_rest_kerberos_keytab_path: /tmp/keytabs/restproxy_1.keytab
+      kafka_rest_kerberos_keytab_path: /tmp/keytabs/restproxy.keytab
       kafka_rest_kerberos_principal: restproxy/broker1.alfi.com
 
 kafka_connect:
@@ -221,7 +221,7 @@ kafka_connect:
     kafka_connect_log_dir: /data/log/kafka-connect
   hosts:
     broker1.alfi.com:
-      ksql_kerberos_keytab_path: /tmp/keytabs/ksql_1.keytab
+      ksql_kerberos_keytab_path: /tmp/keytabs/ksql.keytab
       ksql_kerberos_principal: ksql/broker1.alfi.com
 
 control_center:
@@ -232,5 +232,5 @@ control_center:
       confluent.controlcenter.data.dir: /data/control-center
   hosts:
     broker1.alfi.com:
-      control_center_kerberos_keytab_path: /tmp/keytabs/controlcenter_1.keytab
+      control_center_kerberos_keytab_path: /tmp/keytabs/controlcenter.keytab
       control_center_kerberos_principal: controlcenter/broker1.alfi.com

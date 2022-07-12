@@ -13,7 +13,36 @@ We need 5 machine to run this demo. One machine for ansible control node, one ma
 | broker3.alfi.com  | 172.18.46.13 | Centos 7 | Confluent third node    |
 | kerberos.alfi.com | 172.18.46.14 | Centos 7 | Kerberos and ldap node  |
 
+For Kerberos and ldap configuration, you can follow this instruction : [link](krb_ldap/setup_krb5_ldap.md)
 Make sure all node is connected and **ssh** installed.
+
+Below is list of kerberos principal we will use:
+|        Kerberos Principal       |      Keytab Name      |
+|---------------------------------|-----------------------|
+| kafka/broker1.alfi.com          | allprinc.keytab       |
+| kafka/broker2.alfi.com          | allprinc.keytab       |
+| kafka/broker3.alfi.com          | allprinc.keytab       |
+| zookeeper/broker1.alfi.com      | allprinc.keytab       |
+| zookeeper/broker2.alfi.com      | allprinc.keytab       |
+| zookeeper/broker3.alfi.com      | allprinc.keytab       |
+| connect/broker1.alfi.com        | connect.keytab        |
+| ksql/broker1.alfi.com           | ksql.keytab           |
+| schemaregistry/broker1.alfi.com | schemaregistry.keytab |
+| restproxy/broker1.alfi.com      | restproxy.keytab      |
+| controlcenter/broker1.alfi.com  | controlcenter.keytab  |
+Put all keytab file at /tmp/keytabs/.
+
+Below is list of LDAP principal we will use:
+|               LDAP Principal               | Object Class | memberOf |
+|--------------------------------------------|--------------|----------|
+| cn=kafkadev,ou=people,dc=alfi,dc=com       | groupOfNames |    -     |
+| cn=kafka_broker,ou=people,dc=alfi,dc=com   | person       | kafkadev |
+| cn=mds,ou=people,dc=alfi,dc=com            | person       | kafkadev |
+| cn=connect,ou=people,dc=alfi,dc=com        | person       | kafkadev |
+| cn=schemaregistry,ou=people,dc=alfi,dc=com | person       | kafkadev |
+| cn=restproxy,ou=people,dc=alfi,dc=com      | person       | kafkadev |
+| cn=ksql,ou=people,dc=alfi,dc=com           | person       | kafkadev |
+| cn=controlcenter,ou=people,dc=alfi,dc=com  | person       | kafkadev |
 
 ## Generate SSH Keypair
 Execute command below to generate ssh keypair for confluent host, so you can login to all confluent host without password.
@@ -106,6 +135,6 @@ The contents of `hosts.yml` file can be seen [here](ansible-host.yml).
 
 Control center user:
 ```
-username : control_center
+username : controlcenter
 password : password
 ```
