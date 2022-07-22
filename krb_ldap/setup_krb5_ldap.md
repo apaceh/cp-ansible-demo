@@ -71,11 +71,9 @@ Change `EXAMPLE.COM` in `kadm5.conf` to your domain :
 
 ```bash
 [root@kerberos ~]# kdb5_util create -s -r ALFI.COM
-[root@kerberos ~]# systemctl enable kadmin
-[root@kerberos ~]# systemctl enable krb5kdc
-[root@kerberos ~]# systemctl start kadmin
-[root@kerberos ~]# systemctl start krb5kdc
-[root@kerberos ~]# firewall-cmd --permanent --add-admin kerberos
+[root@kerberos ~]# systemctl enable --now kadmin
+[root@kerberos ~]# systemctl enable --now krb5kdc
+[root@kerberos ~]# firewall-cmd --permanent --add-service=kerberos
 [root@kerberos ~]# firewall-cmd --reload
 ```
 
@@ -126,7 +124,7 @@ olcRootDN: cn=admin,dc=alfi,dc=com
 
 dn: olcDatabase={2}hdb,cn=config
 changetype: modify
-add: olcRootPW
+replace: olcRootPW
 olcRootPW: {SSHA}T957wWSbt2tUv343CTU2Hq7mTSraVvEa
 
 dn: olcDatabase={2}hdb,cn=config
@@ -138,12 +136,12 @@ olcAccess: {2}to * by dn="cn=admin,dc=alfi,dc=com" write by * read
 ```
 
 ```bash
+[root@kerberos ~]# systemctl enable --now slapd
 [root@kerberos ~]# ldapadd -Y EXTERNAL -H ldapi:/// -f ldaprootpasswd.ldif
 [root@kerberos ~]# ldapmodify -Y EXTERNAL -H ldapi:/// -f ldapdomain.ldif
 [root@kerberos ~]# ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/cosine.ldif
 [root@kerberos ~]# ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/nis.ldif
 [root@kerberos ~]# ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/inetorgperson.ldif
-[root@kerberos ~]# ldapadd -x -D cn=admin,dc=alldataint,dc=com -W -f baseldapdomain.ldif
 ```
 
 To activate memberOf overlay for our ldap server, follow these instruction:
@@ -156,7 +154,7 @@ Contents of file `memberof.ldif`:
 dn: cn=module,cn=config
 cn: module
 objectClass: olcModuleList
-objectClass: top
+olcModuleLoad: memberof
 olcModulePath: /usr/lib64/openldap
 
 dn: olcOverlay={0}memberof,olcDatabase={2}hdb,cn=config
@@ -177,19 +175,9 @@ olcMemberOfMemberOfAD: memberOf
 ```
 Contents of file `refint1.ldif`:
 ```bash
-dn: cn=module,cn=config
-cn: module
-objectclass: olcModuleList
-objectclass: top
-olcmodulepath: /usr/lib64/openldap
-
-dn: olcOverlay={1}refint,olcDatabase={2}hdb,cn=config
-objectClass: olcConfig
-objectClass: olcOverlayConfig
-objectClass: olcRefintConfig
-objectClass: top
-olcOverlay: {1}refint
-olcRefintAttribute: memberof member manager owner
+dn: cn=module{1},cn=config
+add: olcmoduleload
+olcmoduleload: refint
 ```
 
 ```bash
@@ -208,12 +196,11 @@ olcRefintAttribute: memberof member manager owner
 
 ```bash
 [root@kerberos ~]# ldapadd -Q -Y EXTERNAL -H ldapi:/// -f memberof.ldif
-[root@kerberos ~]# ldapadd -Q -Y EXTERNAL -H ldapi:/// -f refint1.ldif
+[root@kerberos ~]# ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f refint1.ldif
 [root@kerberos ~]# ldapadd -Q -Y EXTERNAL -H ldapi:/// -f refint2.ldif
 ```
 
 ```bash
-[root@kerberos ~]# 
 [root@kerberos ~]# vim baseldapdomain.ldif
 ```
 Contents of file `baseldapdomain.ldif`:
@@ -231,11 +218,9 @@ ou: people
 ```
 
 ```bash
-[root@kerberos ~]# systemctl enable slapd
-[root@kerberos ~]# systemctl start slapd
+[root@kerberos ~]# ldapadd -x -D cn=admin,dc=alldataint,dc=com -W -f baseldapdomain.ldif
 [root@kerberos ~]# firewall-cmd --permanent --add-service=ldap
 [root@kerberos ~]# firewall-cmd --reload
-[root@kerberos ~]# ldapadd -x -D cn=admin,dc=alldataint,dc=com -W -f baseldapdomain.ldif
 ```
 
 ## Enable gssapi mechanism for ldap
