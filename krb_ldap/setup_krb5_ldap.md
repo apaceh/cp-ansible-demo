@@ -246,6 +246,7 @@ Contents of file `slapd.conf`:
 ```bash
 keytab: /tmp/ldap.keytab
 mech_list: CRAM-MD5 DIGEST-MD5 GSSAPI EXTERNAL
+[root@kerberos ~]#systemctl restart slapd
 ```
 
 Show support mechanism using this command:
